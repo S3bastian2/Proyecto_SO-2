@@ -1,6 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//defino la funcion que inserta en el TLB
+void insertar_en_TLB(unsigned int *tlb, unsigned int pagina,
+                     unsigned int desp, int *entradas) {
+
+    // Si ya metimos 5 páginas se llena.
+    // todavia sin reemplazo lru por facilisidad
+    if (*entradas >= 5) {
+        printf("TLB lleno, aún no hay reemplazo implementado.\n");
+        return;
+    }
+
+    // Cada entrada ocupa 2 unsigned int:
+    // [0] página
+    // [1] desplazamiento
+    //
+    // Por ejemplo:
+    // Entrada 0 → tlb + 0*2 → posiciones 0 y 1
+    // Entrada 1 → tlb + 1*2 → posiciones 2 y 3
+    // Entrada 2 → posiciones 4 y 5 ... y así
+    unsigned int *ptr = tlb + (*entradas * 2);
+
+    // Guardamos la página en la primera posición de la entrada
+    *ptr = pagina;
+
+    // Guardamos el desplazamiento en la segunda posición
+    *(ptr + 1) = desp;
+
+    // Ahora tenemos una entrada más guardada en el TLB
+    (*entradas)++;
+
+    printf("Entrada nueva guardada en el TLB:\n");
+    printf(" - Página: %u\n", pagina);
+    printf(" - Desplazamiento: %u\n", desp);
+    printf(" - Guardado en dirección de memoria: %p\n", (void*)ptr);
+}
+
 //Defino la función para calcular el numero de pagina.
 unsigned int calcular_num_pagina(unsigned int direccion) {
     unsigned int num_pagina = direccion / 4096;
