@@ -74,17 +74,17 @@ void insertar_en_TLB(unsigned int *tlb, unsigned int direccion, unsigned int pag
     (*entradas)++;
 
     printf("Entrada nueva guardada en el TLB:\n");
-    printf("Dirección de memoria: %p\n", *ptr);
-    printf("Página: %p\n", *(ptr + 1));
-    printf("Desplazamiento: %p\n", *(ptr + 2));
+    printf("Dirección de memoria: %d\n", *ptr);
+    printf("Página: %d\n", *(ptr + 1));
+    printf("Desplazamiento: %d\n", *(ptr + 2));
     //Se llama a la función para obtener el numero de la pagina en binario.
     convertir_binario(*(ptr + 1), bits_pagina);
     //se llama a la función para obtener el numero del desplazamiento en binario.
     convertir_binario(*(ptr + 2), bits_desplazamiento);
     //Quiero ver el valor del contador.
-    printf("El valor del contador sera: %p\n", *(ptr + 3));
+    printf("El valor del contador sera: %d\n", *(ptr + 3));
     //Quiero ver el valor la bandera.
-    printf("El valor de la bandera sera: %p\n", *(ptr + 4));
+    printf("El valor de la bandera sera: %d\n", *(ptr + 4));
     printf(" - Guardado en dirección de memoria: %p\n", (void*)ptr);
 }
 
