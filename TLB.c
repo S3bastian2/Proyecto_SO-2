@@ -38,8 +38,8 @@ void insertar_en_TLB(unsigned int *tlb, unsigned int direccion, unsigned int pag
     // [0] dirección
     // [1] página
     // [2] desplazamiento
-    // [3] pagina binario
-    // [4] desplazamiento binario
+    // [3] contador
+    // [4] bandera de verificación, esta sirve para indicar si en cada entrada hay almecanado un valor.
     //
     // Por ejemplo:
     // Entrada 0 → tlb + 0*5 → posiciones 0 y 4
@@ -84,12 +84,21 @@ void insertar_en_TLB(unsigned int *tlb, unsigned int direccion, unsigned int pag
 }
 
 //defino la función de busqueda.
+/* -- Funcion Busqueda -- 
+Esta función recibe el apuntador al espacio de memoria y la dirección mas reciente ingresada
+por el usuario, aca busca a averiguar si esta dirección ya fue ingresada anteriormente en el TLB
+dependiendo de si la función retorna 1 o 0 se activara el protocolo de TLB Miss o TLB Hit.
+Ejemplo: Si retorna 1, entonces es TLB Hit, los mostrara por pantalla y debe mostrar los valores que hay
+en dicha entrada, si retorna 0 o un valor distinto de 1, entonces es TLB Miss, y agregara la nueva entrada.
+Esto esta definido para que ocurra en el main.
+*/
 int busqueda(unsigned int *tlb, unsigned int direccion) {
     for (int i = 0; i < 5; i++) {
+        //Definimos al primer apuntador a nuestro espacio de memoria.
         unsigned int *apuntador = tlb + (i * 5); //Aquí se posicionara en el inicio de cada entrada.
-        if (*(apuntador + 4) == 1) { //Verifica si es valido.
-            if (*apuntador == direccion) {
-                *(apuntador + 3) = contador;
+        if (*(apuntador + 4) == 1) { //Se para en la cuarta posición de la entrada buscando que numero es la bandera, si la bandera es 1 entonces hay una entrada valida, si es 0 es porque no hay nada ahí.
+            if (*apuntador == direccion) { //Se comparan las direcciónes 
+                *(apuntador + 3) = contador; //Nos paramos en la tercera posición para actualizar el contador.
                 contador++;
                 return 1; //Indicando que la dirección ya esta en el tlb
             }
@@ -98,14 +107,24 @@ int busqueda(unsigned int *tlb, unsigned int direccion) {
     return 0; //Indicando que la dirección no esta en el tlb.
 }
 
+/*
+-- Función de reemplazo --
+Esta función se llama con la condición de que nuestro espacio de memoria se lleno, cuando esto ocurre
+el programa debe buscar cual es la entrada mas reciente sin ser usada, para realizar esto hago uso de la variable contador.
+Explicación: La variable contador inicializa su valor en cero, entonces cada vez que haya una nueva entrada este va a ir
+aumentando en 1, con esto podemos tomar la variable con el contador mas pequeño, ubicamosla entrada con el contador mas pequeño 
+y nos paramos en su dirección, esto nos devolvera una ubicación en el TLB tipo: (tlb + n), entonces como nos estamos parando 
+en la dirección unicamente tenemos que irle sumando 1, 2, 3, y 4, para pararnos en todas las posiciones de la entrada a reemplazar.
+Se sobreescriben los valores de esta entrada y se deja libre para que ingresen los nuevo valores.
+*/
 void reemplazo(unsigned int *tlb, unsigned int direccion, unsigned int numero_pagina, unsigned int desplazamiento) {
-    unsigned int posicion = 0;
-    unsigned int contador_pequeno = 0xFFFFFFFF; //Usamos este valor para hacer que contador_pequeño sea un valor muy grande.
+    unsigned int posicion = 0; //Variable que guardara el valor de la entrada con el contador mas pequeño.
+    unsigned int contador_pequeno = 100000; //Usamos este valor para hacer que contador_pequeño sea un valor muy grande.
     for (int i = 0; i < 5; i++) {
         unsigned int *apuntador2 = tlb + (i * 5); //Esta se va a parar en cada una de las posiciones iniciales de cada entrada.
-        if (*(apuntador2 + 3) < contador_pequeno) {
-            contador_pequeno = *(apuntador2 + 3); //Hacemos esto para obtener al valor mas pequeño.
-            posicion = i;
+        if (*(apuntador2 + 3) < contador_pequeno) { //Buscamos el contador mas pequeño en cada entrada.
+            contador_pequeno = *(apuntador2 + 3); //Se actualiza el valor de contador_pequeno.
+            posicion = i; //Obtenemos el indice de la posición.
         }
     }
 
@@ -126,9 +145,17 @@ void reemplazo(unsigned int *tlb, unsigned int direccion, unsigned int numero_pa
     printf("El desplazamiento: %d\n", desplazamiento);
     printf("Contador: %d\n", contador);
     printf("Bandera de validez: %d\n", *(entrada_reemplazada + 4));
+    printf("Hubo reemplazo.\n");
 
 }
-
+/*
+-- MAIN --
+Aquí dentro estan el llamado de las funciones para gestionar el TLB. Tambien esta la logica para recibir
+las direcciones, se asigna una variable llamada "tecla_ingresada", si esta recibe un valor numerico el programa la verifica
+y la castea como un unsigned int, para luego asignarsela a la variable dirección y se pueda agregar al TLB. Si el usuario
+escribe "S" o "s" el programa acaba inmediantamente, pero si el usuario ingresa cualquier otro valor en no sean numeros y la letra "s",
+entonces dira que hay un error y que esta no es una dirección correcta de ingresar.
+*/
 int main() {
     unsigned int *tlb = (unsigned int *)malloc(25 * sizeof(unsigned int));
     //Verificamos que el tlb no haya estado vacio.
@@ -143,13 +170,13 @@ int main() {
 
     //Inicializamos el numero de entradas.
     int entradas = 0;
-    char tecla_ingresada[100];
+    char tecla_ingresada[100]; //Variabel que va a recibir las entradas del usuario.
 
     printf("Hola bienvenido a nuestro traductor de direcciones.\n");
 
-    while (true) {
+    while (true) { //Loop que mantendra el programa en ejecución.
         printf("Ingresa alguna direccion de memoria:");
-        if (fgets(tecla_ingresada, sizeof(tecla_ingresada), stdin) == NULL) {
+        if (fgets(tecla_ingresada, sizeof(tecla_ingresada), stdin) == NULL) { //Verificamos que el usuario no haya dejado el espacio vacio.
             break;
         }
         tecla_ingresada[strcspn(tecla_ingresada, "\n")] = 0;
@@ -182,7 +209,7 @@ int main() {
         unsigned int numero_pagina = calcular_num_pagina(direccion);
         unsigned int desplazamiento = calcular_desplazamiento(direccion);
         //Llamo a la función que va a insertar los valores en el TLB.
-        int verificador = busqueda(tlb, direccion);
+        int verificador = busqueda(tlb, direccion); //Esta variable recibe lo que retorna la función de busqueda.
         if (verificador == 1) {
             printf("TLB Hit\n");
             printf("No hay reemplazo: 0x0\n");
