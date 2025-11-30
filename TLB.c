@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #define bits_pagina 20
 #define bits_desplazamiento 12
@@ -196,7 +197,15 @@ int main() {
         //scanf("%u", &direccion);
         unsigned int numero_pagina = calcular_num_pagina(direccion);
         unsigned int desplazamiento = calcular_desplazamiento(direccion);
-        //Llamo a la función que va a insertar los valores en el TLB.
+        /*Aquí se verifica si la dirección que el usuario ingreso recientemente no esta dentro del TLB
+        dependiendo de si el valor es "1" indicando que ya esta dentro del TLb o si el valor es "0", entonces
+        el programa debe de decir que el valor ya fue ingresado y mostrarlo o si no esta agregarlo en la siguiente
+        entrada disponible.
+        */
+       //Aquí se va a definir el tiempo de ejecución.
+       struct timeval inicio, fin;
+       gettimeofday(&inicio, NULL);
+       
         int verificador = busqueda(tlb, direccion); //Esta variable recibe lo que retorna la función de busqueda.
         if (verificador == 1) {
             printf("TLB Hit\n");
@@ -223,6 +232,10 @@ int main() {
         } else {
             printf("No hay reemplazo 0x0.\n");
         }
+
+        gettimeofday(&fin, NULL);
+        double tiempo_transcurrido = (fin.tv_sec - inicio.tv_sec) + (fin.tv_usec - inicio.tv_usec) / 1000000.0;
+        printf("Tiempo transcurrido: %.6f segundos\n", tiempo_transcurrido);
     }
     free(tlb);
 }
