@@ -6,19 +6,20 @@
 
 #define bits_pagina 20
 #define bits_desplazamiento 12
+#define tamano_pagina 4096
 
 //Aquí se define la variable contador.
 unsigned int contador = 0;
 
 //Defino la función para calcular el numero de pagina.
 unsigned int calcular_num_pagina(unsigned int direccion) {
-    unsigned int num_pagina = direccion / 4096;
+    unsigned int num_pagina = direccion / tamano_pagina;
     return num_pagina;
 }
 
 //Defino la función para calcular la dirección.
 unsigned int calcular_desplazamiento(unsigned int direccion) {
-    unsigned int despla = direccion % 4096;
+    unsigned int despla = direccion % tamano_pagina;
     return despla;
 }
 
@@ -67,7 +68,7 @@ void insertar_en_TLB(unsigned int *tlb, unsigned int direccion, unsigned int pag
     (*entradas)++;
 
     printf("Entrada nueva guardada en el TLB:\n");
-    printf("Dirección de memoria: %d\n", *ptr);
+    /*printf("Dirección de memoria: %d\n", *ptr);
     printf("Página: %d\n", *(ptr + 1));
     printf("Desplazamiento: %d\n", *(ptr + 2));
     //Se llama a la función para obtener el numero de la pagina en binario.
@@ -76,7 +77,7 @@ void insertar_en_TLB(unsigned int *tlb, unsigned int direccion, unsigned int pag
     //se llama a la función para obtener el numero del desplazamiento en binario.
     printf("Desplazamiento en binario: ");
     convertir_binario(*(ptr + 2), bits_desplazamiento);
-    //Quiero ver el valor del contador.
+    //Quiero ver el valor del contador.*/
     printf("El valor del contador sera: %d\n", *(ptr + 3));
     //Quiero ver el valor la bandera.
     printf("El valor de la bandera sera: %d\n", *(ptr + 4));
@@ -185,7 +186,7 @@ int main() {
             continue;
         }
 
-        if ((strcmp(tecla_ingresada, "s") == 0) || (strcmp(tecla_ingresada, "S")) == 0) {
+        if ((strcmp(tecla_ingresada, "s") == 0) || (strcmp(tecla_ingresada, "S") == 0)) {
             printf("Terminando Programa....\n");
             break;
         }
@@ -203,7 +204,7 @@ int main() {
             printf("Page fault\n");
             continue;
         }
-
+        printf("\nInicio del TLB: %p y fin del TLB: %p\n", (void *)tlb, (void *)(tlb + 24));
         unsigned int direccion = (unsigned int)strtoul(tecla_ingresada, NULL, 10); //Definimos la variable que va a guardar la dirrecion que le pasamos a las funciones.
         //scanf("%u", &direccion);
         unsigned int numero_pagina = calcular_num_pagina(direccion);
@@ -212,19 +213,29 @@ int main() {
         int verificador = busqueda(tlb, direccion); //Esta variable recibe lo que retorna la función de busqueda.
         if (verificador == 1) {
             printf("TLB Hit\n");
-            printf("No hay reemplazo: 0x0\n");
             //Aquí nos esta indicando que la dirección ingresada ya esta guardada en el TLB.
         } else {
             printf("TLB Miss\n");
+        }
+
+        printf("Dirección: %u\n", direccion);
+        printf("Numero Pagina: %u\n", numero_pagina);
+        printf("Desplazamiento: %u\n", desplazamiento);
+        printf("Numero de pagina en binario: ");
+        convertir_binario(numero_pagina, bits_pagina);
+        printf("Numero de desplazamiento en binario: ");
+        convertir_binario(desplazamiento, bits_desplazamiento);
+
+        if (verificador == 0) {
             if (entradas < 5) { //Si esta se cumple se ingresan los valores normalmente.
                 insertar_en_TLB(tlb, direccion, numero_pagina, desplazamiento, &entradas);
                 printf("No hay reemplazo: 0x0.\n");
             } else {
                 reemplazo(tlb, direccion, numero_pagina, desplazamiento);
             }
+        } else {
+            printf("No hay reemplazo 0x0.\n");
         }
-        //Se arma la parte de la busqueda.
-        printf("\nInicio del TLB: %p y fin del TLB: %p\n", (void *)tlb, (void *)(tlb + 24));
     }
     free(tlb);
 }
